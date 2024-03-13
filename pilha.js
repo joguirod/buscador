@@ -18,10 +18,15 @@ export class Pilha{
         const topo = this.items[this.items.length - 1]
         if(topo){
             return topo 
-        } else return
+        }
+        return;
     }
 
     size(){
         return this.items.length
+    }
+
+    is_empty(){
+        return this.items.length === 0
     }
 }
