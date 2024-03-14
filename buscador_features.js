@@ -46,26 +46,11 @@ export function has_autoreference(link, hashtable){
     return false
 }
 
-export function quantity_of_especific_word(html_document, words){
-    const $ = load_html(html_document)
-    const text_content = $('body').text().toLowerCase()
-
-    const word_frequency = {};
-    for (const word of words) {
-        const regex = new RegExp(word, 'gi'); // 'g' para corresponder globalmente e 'i' para fazer a busca insensível a maiúsculas e minúsculas
-        const matches = text_content.match(regex); // encontrando todas as ocorrências do termo na página
-
-        word_frequency[word] = matches.length; // armazenando a frequência do termo
-    }
-
-    return word_frequency
-}
-
 export function write_in_json(object, json_path){
     const jsonString = JSON.stringify(object);
 
     // Escrever a string JSON em um arquivo
-    fs.writeFile(json_path, jsonString, 'utf8', (err) => {
+    fs.writeFileSync(json_path, jsonString, 'utf8', (err) => {
     if (err) {
         console.error('Erro ao escrever arquivo:', err);
         return;
