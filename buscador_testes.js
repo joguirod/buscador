@@ -1,4 +1,4 @@
-import { get_html_on, has_autoreference, quantity_of_especific_word, write_in_json, read_json} 
+import { get_html_on, quantity_of_especific_word, write_in_json, read_json} 
 from "./buscador_features.js"
 import { index_page } from "./indexer.js"
 import { question } from 'readline-sync'
