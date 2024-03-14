@@ -1,4 +1,4 @@
-import {load_html, get_html_on, download_html, write_in_json} from "./buscador_features.js"
+import {load_html, get_html_on, download_html, write_in_json} from "./features/buscador_features.js"
 import {Pilha} from "./pilha.js"
 
 let stack = new Pilha([])

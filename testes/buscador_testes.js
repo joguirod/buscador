@@ -1,6 +1,6 @@
 import { get_html_on, quantity_of_especific_word, write_in_json, read_json} 
-from "./buscador_features.js"
-import { index_page } from "./indexer.js"
+from "../features/buscador_features.js"
+import { index_page } from "../indexer.js"
 import { question } from 'readline-sync'
 
 async function main(){

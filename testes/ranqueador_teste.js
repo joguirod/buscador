@@ -1,5 +1,5 @@
-import { read_json } from "./buscador_features.js"
-import { calculate_page_freshness, quantity_of_especific_word } from "./ranqueador_features.js"
+import { read_json } from "../features/buscador_features.js"
+import { calculate_page_freshness, quantity_of_especific_word } from "../features/ranqueador_features.js"
 
 function main(){
     const page = "paginas/matrix.html"
