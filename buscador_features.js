@@ -39,13 +39,6 @@ function set_document_name(html){
     return document_name
 }
 
-export function has_autoreference(link, hashtable){
-    for(const url of hashtable[link]){
-        if(url === link) return true;
-    }
-    return false
-}
-
 export function write_in_json(object, json_path){
     const jsonString = JSON.stringify(object);
 
