@@ -2,39 +2,40 @@ import {load_html, get_html_on, download_html, write_in_json} from "./features/b
 import {Pilha} from "./pilha.js"
 
 let stack = new Pilha([])
+const download_path = "../paginas/"
 
 export async function index_page(url, hashtable, urlBase){
     try{
-        if(verify_already_indexed(url, hashtable)){
+        if(verify_already_indexed(urlBase + url, hashtable)){
             // verifica se a pilha não está vazia, para não acabar adicionando undefined na hashtable
             if(!stack.is_empty()){
-                hashtable[url].push(stack.top())
+                hashtable[urlBase + url].push(stack.top())
             }
             return;
         }
-        hashtable[url] = []
-        // verifica se a pilha não está vazia, para não acabar adicionando undefined na hashtable1
+        hashtable[urlBase + url] = []
+        // verifica se a pilha não está vazia, para não acabar adicionando undefined na hashtable
         if(!stack.is_empty()){
-            hashtable[url].push(stack.top())
+            hashtable[urlBase + url].push(stack.top())
         }
-        stack.push(url)
+        stack.push(urlBase + url)
         const document = await get_html_on(urlBase + url)
-        download_html(document)
+        download_html(document, url, download_path)
         const links = get_links(document)
         for(let link of links){
             await index_page(link, hashtable, urlBase)
         }
         stack.pop()
     } catch(error){
-        console.log(error)
+        throw new IndexPageException(error)
     }
 }
 
-function verify_already_indexed(url, ht){
-    return ht.hasOwnProperty(url)
+function verify_already_indexed(url, hashtable){
+    return hashtable.hasOwnProperty(url)
 }
 
-function get_links(document){
+export function get_links(document){
     const $ = load_html(document)
     const links = []
         

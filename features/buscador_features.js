@@ -1,9 +1,17 @@
 import * as cheerio from 'cheerio'
 import axios from 'axios'
 import fs from 'fs'
+import {LoadHtmlException} from "../exceptions/LoadHtmlException.js"
+import {HtmlEmptyException} from "../exceptions/HtmlEmptyException.js"
+import {GetRequistionException} from "../exceptions/GetRequistionException.js"
+import {DownloadHtmlException} from "../exceptions/DownloadHtmlException.js"
 
 export function load_html(html){
-    return cheerio.load(html)
+    try{
+        return cheerio.load(html)
+    } catch(error){
+        throw new LoadHtmlException("Erro ao tentar carregar o HTML para o Cheerio")
+    }
 }
 
 export async function get_html_on(url){
@@ -13,33 +21,64 @@ export async function get_html_on(url){
         return data;
     }
     catch(error){
-        console.log(error)
+        throw new GetRequistionException("Erro ao fazer a requisição GET")
     }
 }
 
 // implementar um get_html mas nos arquivos e não na url, para as funções de pontuação
 export function get_html_off(file_path){
     const document =  fs.readFileSync(file_path)
-    return load_html(document)
+    return document
 }
 
-export async function download_html(html){
-    const document_name = set_document_name(html)
-    const path = './paginas/'
-    fs.writeFileSync(path + `${document_name}.html`, html)
-}
-
-function set_document_name(html){
-    const $ = load_html(html)
-    const title = $('title').text().toLowerCase()
-    let document_name = title.split(" ")
-    if(document_name.length > 1){
-        document_name = document_name.join("_")
+export async function download_html(html, url, path){
+    if (!html || html.trim() === '') {
+        throw new HtmlEmptyException("HTML está vazio ou inválido");
     }
-    return document_name
+
+    try{
+        const document_name = set_document_name(url, html)
+        fs.writeFileSync(path + `${document_name}.html`, html)
+    } catch(error){
+        throw new DownloadHtmlException("Erro ao fazer o download do html")
+    }
 }
 
-export function write_in_json(object, json_path){
+function set_document_name(url, html){
+    // se tiver '/' no link, nomeie o arquivo de acordo com o <title> do html
+    if(url.split("/").length > 1){
+        return document_name_by_title(html)
+    }
+    // se não, nomeio com a url, exemplo: urlBase/mochileiro.html arquivo = mochileiro. html, urlBase/filmes/lista_completa arquivo = <title> tag </title>
+    return document_name_by_url(url)
+}
+
+function document_name_by_title(html) {
+    const title = get_html_title(html).toLowerCase();
+    
+    // Remover espaços extras e substituir acentos por caracteres sem acento
+    const cleanedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+    
+    // Remover caracteres especiais, exceto letras, números e o sublinhado
+    const cleanedTitleSpecialChars = cleanedTitle.replace(/[^\w\s]/gi, '');
+
+    // Limitar o comprimento do nome do documento, se necessário
+    const maxLength = 255; // Exemplo de limite de comprimento
+    const truncatedTitle = cleanedTitleSpecialChars.substring(0, maxLength);
+
+    return truncatedTitle;
+}
+
+function document_name_by_url(url){
+    return url.split(".html")[0]
+}
+
+function get_html_title(html){
+    const $ = load_html(html)
+    return $('title').text()
+}
+
+export async function write_in_json(object, json_path){
     const jsonString = JSON.stringify(object);
 
     // Escrever a string JSON em um arquivo
