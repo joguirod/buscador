@@ -1,4 +1,5 @@
 import {get_html_off, get_html_title,load_html, read_json} from "./buscador_features.js"
+import chalk from 'chalk'
 import * as fs from 'fs'
 
 const points_table = read_json("../pontuacao.json")
@@ -151,6 +152,8 @@ function calculate_page_points(page_file, file_name, hashtable, words){
 
     points["uso_em_tags"] = calculate_points_for_words_in_tags(words, page_file)
 
+    points["pontos_totais"] = sum_page_points(points)
+
     return points
 }
 
@@ -181,36 +184,39 @@ export function ranker(words){
     return pages
 }
 
-function sumPagePoints(pages) {
-    const pageSum = {};
-
-    // Calculando a soma dos pontos para cada página, excluindo a chave "deve_exibir"
-    for (const page in pages) {
-        const points = Object.entries(pages[page]).reduce((acc, [key, value]) => {
-            if (key !== 'deve_exibir') {
-                return acc + value;
-            }
-            return acc;
-        }, 0);
-        pageSum[page] = points;
+export function sum_page_points(points) {
+    let total_points = 0
+    for(const key of Object.keys(points)){
+        if(key !== "deve_exibir" && key !== "pontos_totais"){
+            total_points += points[key]
+        }
     }
-
-    return pageSum;
+    return total_points
 }
 
 export function sortPages(pages) {
-    const pageSum = sumPagePoints(pages);
+    const orderedPages = Object.keys(pages).sort((a, b) => {
+        return pages[b]["pontos_totais"] - pages[a]["pontos_totais"];
+    });
 
-    // Ordenando as páginas com base na soma dos pontos
-    const orderedPages = Object.keys(pageSum).sort((a, b) => pageSum[b] - pageSum[a]);
-
-    // Criando um objeto ordenado com as páginas e a soma dos pontos
     const sortedPages = {};
     for (const page of orderedPages) {
-        sortedPages[page] = pageSum[page];
+        sortedPages[page] = pages[page];
     }
 
     return sortedPages;
+}
+
+export function ranking_to_show(pages){
+    const titles = get_html_titles_by_page_files_array(page_files)(pages)
+    let i = 0
+    for(const key of Object.keys(pages)){
+        console.log(`  ${chalk.underline(titles[i])}\n`, )
+        for(const point of Object.keys(pages[key])){
+            console.log(`\t¬ ${point}: ${pages[key][point]}\n` )
+        }
+        i++
+    }
 }
 
 function select_pages_to_show(pages){
@@ -227,25 +233,31 @@ function select_pages_to_show(pages){
 
 export function show_pages(pages){
     const pages_to_show = sortPages(select_pages_to_show(pages))
-    const titles_to_show = []
-    // key = file_name
-    for(const key of Object.keys(pages_to_show)){
-        const file = get_file_by(key)
-        const title = get_html_title_by_file(file)
-        titles_to_show.push(title)
+    const titles_to_show = get_html_titles_by_page_files_array(pages_to_show)
+    for(let i = 0; i < titles_to_show.length; i++){
+        console.log(`  ${chalk.underline(titles_to_show[i])}\n`, )
     }
-    return titles_to_show
 }
 
-function get_html_title_by_file(file){
-    const file_html = get_html_off(file)
-    let title = get_html_title(file_html)
+function get_html_titles_by_page_files_array(page_files){
+    const titles = []
+    for(const key of Object.keys(page_files)){
+        const page_file = get_page_file_by(key)
+        const title = get_html_title_by_page_file(page_file)
+        titles.push(title)
+    }
+    return titles
+}
+
+function get_html_title_by_page_file(page_file){
+    const page_html = get_html_off(page_file)
+    let title = get_html_title(page_html)
     const first_letter_in_upper_case = title[0]
     title = first_letter_in_upper_case + title.slice(1)
     return title
 }
 
-function get_file_by(file_name){
+function get_page_file_by(file_name){
     const files_path = "../paginas"
     const file = files_path + "/" + file_name
     return file    
