@@ -88,6 +88,50 @@ export function has_autoreference(page_file){
     return false
 }
 
+function calculate_points_for_words_in_tags(words, page_file){
+    const page_html = get_html_off(page_file)
+
+    const tags = ['meta', 'title', 'h1', 'h2', 'p', 'a']
+    let points = 0
+
+    for(const word of words){
+        for(const tag of tags){
+            points += occurrencesInTag(tag, word, page_html)
+        }
+    }
+
+    return points
+}
+
+function occurrencesInTag(tag, word, page_html) {
+    const $ = load_html(page_html)
+    
+    let points = 0
+    const regex = new RegExp("\\b" + word + "\\b", "gi");
+    
+    $(tag).each((index, element) => {
+        if(tag === "meta"){
+            const content = $(element).attr('content')
+            if(content){
+                // Cria uma expressão regular para encontrar a palavra
+                const matches = content.match(regex); // encontrando todas as ocorrências do termo na página
+        
+                const quantity_frequency = matches ? matches.length : 0
+                points += quantity_frequency * points_table["termo_em_meta"]
+            }
+        } else {
+            const text_content = $(element).text()
+            const matches = text_content.match(regex);
+
+            const quantity_frequency = matches ? matches.length : 0
+            const key_in_points_table = `termo_em_${tag}`
+            points += quantity_frequency * points_table[key_in_points_table]
+        }
+    })
+
+    return points;
+}
+
 function calculate_page_points(page_file, file_name, hashtable, words){
     const file_url = get_url_by(file_name)
 
@@ -104,6 +148,8 @@ function calculate_page_points(page_file, file_name, hashtable, words){
     // se a frequência das palavras for igual a 0, não deve exibir, do contrário deve ser exibido
     // pode exibir = 1; não pode exibir = 0
     points["frequencia"] === 0 ? points["deve_exibir"] = 0 : points["deve_exibir"] = 1
+
+    points["uso_em_tags"] = calculate_points_for_words_in_tags(words, page_file)
 
     return points
 }
