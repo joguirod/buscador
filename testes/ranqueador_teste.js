@@ -1,5 +1,5 @@
 import { read_json } from "../features/buscador_features.js"
-import { has_autoreference, ranker} from "../features/ranqueador_features.js"
+import { has_autoreference, ranker, rankPages} from "../features/ranqueador_features.js"
 
 function main(){
     const page = "..paginas/blade_runner.html"
@@ -7,7 +7,8 @@ function main(){
 
     console.log(has_autoreference(page))
 
-    console.log(ranker(["matrix"]))
+    const pages = ranker(["matrix"])
+    console.log(rankPages(pages))
 }
 
 main()
