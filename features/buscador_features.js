@@ -37,34 +37,36 @@ export async function download_html(html, url, path){
     }
 
     try{
-        const document_name = set_document_name(url, html)
+        const document_name = set_document_name(url)
         fs.writeFileSync(path + `${document_name}.html`, html)
     } catch(error){
-        throw new DownloadHtmlException("Erro ao fazer o download do html")
+        // throw new HtmlEmptyException("Erro ao fazer o download HTML");
+        console.log("(!) Houve uma exceção durante o download")
     }
 }
 
-function set_document_name(url, html){
+function set_document_name(url){
     // se tiver '/' no link, nomeie o arquivo de acordo com o <title> do html
     if(url.split("/").length > 1){
-        return document_name_by_title(html)
+        return document_name_by_title(url)
     }
     // se não, nomeio com a url, exemplo: urlBase/mochileiro.html arquivo = mochileiro. html, urlBase/filmes/lista_completa arquivo = <title> tag </title>
     return document_name_by_url(url)
 }
 
-function document_name_by_title(html) {
-    const title = get_html_title(html).toLowerCase();
+function document_name_by_title(url) {
+    // const title = get_html_title(html).toLowerCase();
     
-    // Remover espaços extras e substituir acentos por caracteres sem acento
-    const cleanedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+    // // Remover espaços extras e substituir acentos por caracteres sem acento
+    // const cleanedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
     
-    // Remover caracteres especiais, exceto letras, números e o sublinhado
-    const cleanedTitleSpecialChars = cleanedTitle.replace(/[^\w\s]/gi, '');
+    // // Remover caracteres especiais, exceto letras, números e o sublinhado
+    // const cleanedTitleSpecialChars = cleanedTitle.replace(/[^\w\s]/gi, '');
 
-    // Limitar o comprimento do nome do documento, se necessário
-    const maxLength = 255; // Exemplo de limite de comprimento
-    const truncatedTitle = cleanedTitleSpecialChars.substring(0, maxLength);
+    // // Limitar o comprimento do nome do documento, se necessário
+    // const maxLength = 255; // Exemplo de limite de comprimento
+    // const truncatedTitle = cleanedTitleSpecialChars.substring(0, maxLength);
+    let truncatedTitle = url.split("/").join("$")
 
     return truncatedTitle;
 }

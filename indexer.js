@@ -1,4 +1,5 @@
-import {load_html, get_html_on, download_html, write_in_json} from "./features/buscador_features.js"
+import {load_html, get_html_on, download_html } from "./features/buscador_features.js"
+import { IndexPageException } from "./exceptions/IndexPageException.js"
 import {Pilha} from "./pilha.js"
 
 let stack = new Pilha([])
@@ -6,19 +7,19 @@ const download_path = "../paginas/"
 
 export async function index_page(url, hashtable, urlBase){
     try{
-        if(verify_already_indexed(urlBase + url, hashtable)){
+        if(verify_already_indexed(url, hashtable)){
             // verifica se a pilha não está vazia, para não acabar adicionando undefined na hashtable
             if(!stack.is_empty()){
-                hashtable[urlBase + url].push(stack.top())
+                hashtable[url].push(stack.top())
             }
             return;
         }
-        hashtable[urlBase + url] = []
+        hashtable[url] = []
         // verifica se a pilha não está vazia, para não acabar adicionando undefined na hashtable
         if(!stack.is_empty()){
-            hashtable[urlBase + url].push(stack.top())
+            hashtable[url].push(stack.top())
         }
-        stack.push(urlBase + url)
+        stack.push(url)
         const document = await get_html_on(urlBase + url)
         download_html(document, url, download_path)
         const links = get_links(document)

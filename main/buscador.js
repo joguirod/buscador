@@ -25,7 +25,7 @@ async function main(){
                 try{
                     await index_page(url_inicial, hashtable, url_base)
                 } catch(error){
-                    console.log("Ocorreu um erro durante a indexação, mesmo assim algumas páginas poderam ser indexadas.")
+                    console.log("(!) Ocorreu um erro durante a indexação, mesmo assim algumas páginas poderam ser indexadas.")
                 }
                 await write_in_json(hashtable, indexed_file_path)
                 press_anykey()
