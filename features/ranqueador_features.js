@@ -1,4 +1,4 @@
-import {get_html_off, load_html, read_json} from "./buscador_features.js"
+import {get_html_off, get_html_title,load_html, read_json} from "./buscador_features.js"
 import * as fs from 'fs'
 
 const points_table = read_json("../pontuacao.json")
@@ -198,19 +198,57 @@ function sumPagePoints(pages) {
     return pageSum;
 }
 
-export function rankPages(pages) {
+export function sortPages(pages) {
     const pageSum = sumPagePoints(pages);
 
     // Ordenando as páginas com base na soma dos pontos
-    const sortedPages = Object.keys(pageSum).sort((a, b) => pageSum[b] - pageSum[a]);
+    const orderedPages = Object.keys(pageSum).sort((a, b) => pageSum[b] - pageSum[a]);
 
     // Criando um objeto ordenado com as páginas e a soma dos pontos
-    const rankedPages = {};
-    for (const page of sortedPages) {
-        rankedPages[page] = pageSum[page];
+    const sortedPages = {};
+    for (const page of orderedPages) {
+        sortedPages[page] = pageSum[page];
     }
 
-    return rankedPages;
+    return sortedPages;
+}
+
+function select_pages_to_show(pages){
+    const pages_to_show = []
+
+    for(const page of Object.keys(pages)){
+        if(pages[page]["deve_exibir"] === 1){
+            pages_to_show[page] = pages[page]
+        }
+    }
+
+    return pages_to_show
+}
+
+export function show_pages(pages){
+    const pages_to_show = sortPages(select_pages_to_show(pages))
+    const titles_to_show = []
+    // key = file_name
+    for(const key of Object.keys(pages_to_show)){
+        const file = get_file_by(key)
+        const title = get_html_title_by_file(file)
+        titles_to_show.push(title)
+    }
+    return titles_to_show
+}
+
+function get_html_title_by_file(file){
+    const file_html = get_html_off(file)
+    let title = get_html_title(file_html)
+    const first_letter_in_upper_case = title[0]
+    title = first_letter_in_upper_case + title.slice(1)
+    return title
+}
+
+function get_file_by(file_name){
+    const files_path = "../paginas"
+    const file = files_path + "/" + file_name
+    return file    
 }
 
 function get_file_name(file){

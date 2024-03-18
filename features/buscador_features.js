@@ -75,7 +75,7 @@ function document_name_by_url(url){
     return url.split(".html")[0]
 }
 
-function get_html_title(html){
+export function get_html_title(html){
     const $ = load_html(html)
     return $('title').text()
 }
