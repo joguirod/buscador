@@ -58,7 +58,8 @@ async function main(){
                         let value = get_number("> Qual o novo valor?\n-> ")
                         points_customization(points_table, choosen, value)
                         console.log("> Pontuação alterada com sucesso :D")
-                        continue_q = question('> Caso queira continuar alterando escreva "Y", do contrário escreva "N"\n-> ').toUpperCase()
+                        continue_q = question('> Caso não queira continuar alterando escreva "N"...\n-> ').toUpperCase()
+                        
                     } while(continue_q !== 'N')    
                 } else {
                     console.log("> Opção inválida! Tente novamente...")
@@ -104,7 +105,7 @@ function clear_screen(){
 }
 
 function press_anykey(){
-    question("Press <any> key to continue...")
+    question("Press <anykey> to continue...")
 }
 
 function points_customization(points_table, choosen, value){
@@ -116,10 +117,10 @@ function points_customization(points_table, choosen, value){
             points_table["quantidade_termos"] = value
             break
         case 3:
-            points_table["termo_no_title"] = value
+            points_table["termo_em_title"] = value
             break
         case 4:
-            points_table["termo_no_meta"] = value
+            points_table["termo_em_meta"] = value
             break
         case 5:
             points_table["termo_em_h1"] = value
