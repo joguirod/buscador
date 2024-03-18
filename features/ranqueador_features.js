@@ -197,7 +197,31 @@ export function sum_page_points(points) {
 
 export function sortPages(pages) {
     const orderedPages = Object.keys(pages).sort((a, b) => {
-        return pages[b]["pontos_totais"] - pages[a]["pontos_totais"];
+        // Critério principal: pontos totais
+        const pontosA = pages[a]["pontos_totais"];
+        const pontosB = pages[b]["pontos_totais"];
+        if (pontosA !== pontosB) {
+            return pontosB - pontosA; // Ordena por pontos totais de forma decrescente
+        }
+
+        // Critério de desempate a: Maior quantidade de termos buscados no corpo do texto
+        const termosBuscadosA = pages[a]["quantidade_termos"];
+        const termosBuscadosB = pages[b]["quantidade_termos"];
+        if (termosBuscadosA !== termosBuscadosB) {
+            return termosBuscadosB - termosBuscadosA; // Ordena por quantidade de termos buscados de forma decrescente
+        }
+
+        // Critério de desempate b: Maior frescor do conteúdo (datas mais recentes)
+        const dataA = new Date(pages[a]["frescor_conteudo"])
+        const dataB = new Date(pages[b]["frescor_conteudo"]);
+        if (dataA !== dataB) {
+            return dataB - dataA; // Ordena por data de publicação de forma decrescente
+        }
+
+        // Critério de desempate c: Maior número de links recebidos
+        const linksRecebidosA = pages[a]["autoridade"];
+        const linksRecebidosB = pages[b]["autoridade"];
+        return linksRecebidosB - linksRecebidosA; // Ordena por número de links recebidos de forma decrescente
     });
 
     const sortedPages = {};
