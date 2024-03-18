@@ -1,4 +1,5 @@
 import {get_html_off, get_html_title,load_html, read_json} from "./buscador_features.js"
+import { NothingToShowException } from "../exceptions/NothingToShowException.js"
 import chalk from 'chalk'
 import * as fs from 'fs'
 
@@ -208,10 +209,10 @@ export function sortPages(pages) {
 }
 
 export function ranking_to_show(pages){
-    const titles = get_html_titles_by_page_files_array(page_files)(pages)
+    const titles = get_html_titles_by_page_files_array(pages)
     let i = 0
     for(const key of Object.keys(pages)){
-        console.log(`  ${chalk.underline(titles[i])}\n`, )
+        console.log(`  ${chalk.underline(titles[i])}: ${key}\n`)
         for(const point of Object.keys(pages[key])){
             console.log(`\t¬ ${point}: ${pages[key][point]}\n` )
         }
@@ -231,11 +232,13 @@ function select_pages_to_show(pages){
     return pages_to_show
 }
 
-export function show_pages(pages){
-    const pages_to_show = sortPages(select_pages_to_show(pages))
+export function show_pages(pages){  
+    const pages_to_show = select_pages_to_show(pages)
+
     const titles_to_show = get_html_titles_by_page_files_array(pages_to_show)
+
     for(let i = 0; i < titles_to_show.length; i++){
-        console.log(`  ${chalk.underline(titles_to_show[i])}\n`, )
+        console.log(`\n  ${chalk.underline(titles_to_show[i])}`)
     }
 }
 
