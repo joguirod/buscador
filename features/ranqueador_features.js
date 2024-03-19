@@ -1,24 +1,32 @@
-import {get_html_off, get_html_title,load_html, read_json} from "./buscador_features.js"
+import { get_html_off } from "./buscador_features.js"
 import { NothingToShowException } from "../exceptions/NothingToShowException.js"
+import { get_files_from, sum_page_points, get_page_file_by, get_file_name, get_url_by, read_json, load_html, get_html_title } from "../utils/utils.js"
 import chalk from 'chalk'
 import * as fs from 'fs'
 
 const points_table = read_json("../pontuacao.json")
 
-function calculate_page_authority(page, hashtable){
-    const points = hashtable[page].length * points_table["autoridade"]
+function calculate_page_authority(file_url, hashtable){
+    let points = hashtable[file_url].length * points_table["autoridade"]
+    /*
+    se há autoreferência, remova pontuação, uma vez que a autoridade refere-se
+    a links recebidos de OUTRAS páginas
+    */
+    if(has_autoreference(file_url)){
+        points -= points_table["autoridade"]
+    }
     return points 
 }
 
 function calculate_page_freshness_points(page_file){
     const document = get_html_off(page_file)
     const $ = load_html(document)
-    /*
-    pega todo o texto em tags <em>, da split usando : porque Data: 12/03/2024 resulta em " 12/03/2024",
-    depois trim para tirar o espaço antes do dia
-    */
-    let publication_date = ""
 
+    let publication_date = ""
+    /*
+    percorre todas as tags <p> e se ela começar com "data", splita por ":" e pega o resto
+    nas páginas fornecidas "Data: 12/09/2012", selecionaria " 12/09/2012" e em seguida limparia o espaço em branco
+    */
     const p_tags = $("p").each((index, element) => {
         if($(element).text().toLowerCase().startsWith("data")){
             let text = $(element).text().toLowerCase().split(":")
@@ -38,7 +46,10 @@ function calculate_page_freshness_points(page_file){
     }
 
     // se não, retorne a diferença de anos multiplicados pela quantidade de pontos a serem reduzidos (valor negativo)
-    return Math.abs(current_year - publication_year) * points_table["reducao_frescor"] * -1
+    const points_to_receive = Math.abs(current_year - publication_year) * points_table["reducao_frescor"] * -1
+
+    // se a data da página não estiver em uma tag <p> e a pontuação calculada acabe ficando NaN, retorne 0
+    return isNaN(points_to_receive) ? 0 : points_to_receive
 }
 
 function calculate_quantity_of_especific_word_points(page_file, words){
@@ -68,21 +79,19 @@ function calculate_quantity_of_especific_word_points(page_file, words){
     return total_points
 }
 
-function calculate_autoreference_points(page_file){
+function calculate_autoreference_points(file_url){
     let total_points = 0
-    if(has_autoreference(page_file)){
+    // verifica se há auto referência, se tiver adiciona a pontuação negativa
+    if(has_autoreference(file_url)){
         total_points = points_table["penalizacao_autoreferencia"] * -1
     }
     return total_points
 }
 
-export function has_autoreference(page_file){
+export function has_autoreference(file_url){
     const hashtable = read_json("../indexed.json")
 
-    const file_name = get_file_name(page_file)
-
-    const file_url = get_url_by(file_name)
-
+    // percorre as urls que referenciam a url do arquivo, caso sejam iguais, true
     for(const url of hashtable[file_url]){
         if(url === file_url) return true
     }
@@ -93,10 +102,13 @@ export function has_autoreference(page_file){
 function calculate_points_for_words_in_tags(words, page_file){
     const page_html = get_html_off(page_file)
 
+    // tags a serem vistas
     const tags = ['meta', 'title', 'h1', 'h2', 'p', 'a']
     let points = 0
 
+    // para cada palavras das pesquisadas
     for(const word of words){
+        // para cada tag, verifica se há ocorrencia da palavra
         for(const tag of tags){
             points += occurrencesInTag(tag, word, page_html)
         }
@@ -107,11 +119,14 @@ function calculate_points_for_words_in_tags(words, page_file){
 
 function occurrencesInTag(tag, word, page_html) {
     const $ = load_html(page_html)
-    
     let points = 0
+
+    // regex para selecionar exatamente a palavra desejada
     const regex = new RegExp("\\b" + word + "\\b", "gi");
     
     $(tag).each((index, element) => {
+
+        // se a tag for meta, verifique o atributo content
         if(tag === "meta"){
             const content = $(element).attr('content')
             if(content){
@@ -121,12 +136,17 @@ function occurrencesInTag(tag, word, page_html) {
                 const quantity_frequency = matches ? matches.length : 0
                 points += quantity_frequency * points_table["termo_em_meta"]
             }
+        // se não, apenas veja se está presente no texto da tag
         } else {
             const text_content = $(element).text()
+            // adiciona em matches as aparições
             const matches = text_content.match(regex);
 
+            // se há aparições, devolva quantas, do contrário devolva 0
             const quantity_frequency = matches ? matches.length : 0
+            // vê a quantidade de pontos dada para a tag especifica
             const key_in_points_table = `termo_em_${tag}`
+            // incrementa aos pontos a multiplicação da frequencia com os pontos dados para cada aparição
             points += quantity_frequency * points_table[key_in_points_table]
         }
     })
@@ -137,13 +157,13 @@ function occurrencesInTag(tag, word, page_html) {
 function calculate_page_points(page_file, file_name, hashtable, words){
     const file_url = get_url_by(file_name)
 
+    // a pontuação é colocada em um objeto para percorrer posteriormente
     const points = {}
     points["autoridade"] = calculate_page_authority(file_url, hashtable)
 
     points["frescor_conteudo"] = calculate_page_freshness_points(page_file)
 
-    points["autoreferencia"] = calculate_autoreference_points(page_file)
-    // adicionar o calculo das tags
+    points["autoreferencia"] = calculate_autoreference_points(file_url)
 
     points["frequencia"] = calculate_quantity_of_especific_word_points(page_file, words)
 
@@ -158,25 +178,13 @@ function calculate_page_points(page_file, file_name, hashtable, words){
     return points
 }
 
-function get_files_from(directory){
-    /*
-    tenho que percorrer o diretório de páginas, acessar página por página, calcular a pontuação de cada página
-    */
-    const files = []
-    let file_list = fs.readdirSync("../paginas")
-    for(let i in file_list){
-        files.push(directory + '/' + file_list[i])
-    }
-
-    return files
-    
-}
-
 export function ranker(words){
+    // adicionará o nome de cada página e como valor a pontuação da respectiva página
     let pages = {}
     const files = get_files_from("../paginas")
     const hashtable = read_json("../indexed.json")
     
+    // para cada arquivo, calcule sua pontuação e adicione ao objeto
     for(const file of files){
         const file_name = get_file_name(file)
         pages[file_name] = calculate_page_points(file, file_name, hashtable, words)
@@ -185,59 +193,15 @@ export function ranker(words){
     return pages
 }
 
-export function sum_page_points(points) {
-    let total_points = 0
-    for(const key of Object.keys(points)){
-        if(key !== "deve_exibir" && key !== "pontos_totais"){
-            total_points += points[key]
-        }
-    }
-    return total_points
-}
-
-export function sortPages(pages) {
-    const orderedPages = Object.keys(pages).sort((a, b) => {
-        // Critério principal: pontos totais
-        const pontosA = pages[a]["pontos_totais"];
-        const pontosB = pages[b]["pontos_totais"];
-        if (pontosA !== pontosB) {
-            return pontosB - pontosA; // Ordena por pontos totais de forma decrescente
-        }
-
-        // Critério de desempate a: Maior quantidade de termos buscados no corpo do texto
-        const termosBuscadosA = pages[a]["quantidade_termos"];
-        const termosBuscadosB = pages[b]["quantidade_termos"];
-        if (termosBuscadosA !== termosBuscadosB) {
-            return termosBuscadosB - termosBuscadosA; // Ordena por quantidade de termos buscados de forma decrescente
-        }
-
-        // Critério de desempate b: Maior frescor do conteúdo (datas mais recentes)
-        const dataA = new Date(pages[a]["frescor_conteudo"])
-        const dataB = new Date(pages[b]["frescor_conteudo"]);
-        if (dataA !== dataB) {
-            return dataB - dataA; // Ordena por data de publicação de forma decrescente
-        }
-
-        // Critério de desempate c: Maior número de links recebidos
-        const linksRecebidosA = pages[a]["autoridade"];
-        const linksRecebidosB = pages[b]["autoridade"];
-        return linksRecebidosB - linksRecebidosA; // Ordena por número de links recebidos de forma decrescente
-    });
-
-    const sortedPages = {};
-    for (const page of orderedPages) {
-        sortedPages[page] = pages[page];
-    }
-
-    return sortedPages;
-}
-
 export function ranking_to_show(pages){
-    const titles = get_html_titles_by_page_files_array(pages)
+    // pega todo o texto das tags <title> das páginas
+    const titles = get_html_titles_by_page_files_table(pages)
     let i = 0
     for(const key of Object.keys(pages)){
+        // imprime o title e o "link" da página
         console.log(`  ${chalk.underline(titles[i])}: ${key}\n`)
         for(const point of Object.keys(pages[key])){
+            // imprime a pontuação de cada página
             console.log(`\t¬ ${point}: ${pages[key][point]}\n` )
         }
         i++
@@ -245,8 +209,9 @@ export function ranking_to_show(pages){
 }
 
 function select_pages_to_show(pages){
-    const pages_to_show = []
+    const pages_to_show = {}
 
+    // percorre as páginas e seleciona aquelas que possuem o atributo deve_exibir = 1, deve ser exibida
     for(const page of Object.keys(pages)){
         if(pages[page]["deve_exibir"] === 1){
             pages_to_show[page] = pages[page]
@@ -259,14 +224,17 @@ function select_pages_to_show(pages){
 export function show_pages(pages){  
     const pages_to_show = select_pages_to_show(pages)
 
-    const titles_to_show = get_html_titles_by_page_files_array(pages_to_show)
+    const titles_to_show = get_html_titles_by_page_files_table(pages_to_show)
 
-    for(let i = 0; i < titles_to_show.length; i++){
-        console.log(`\n  ${chalk.underline(titles_to_show[i])}`)
+    let i = 0
+    for(const key of Object.keys(pages_to_show)){
+        console.log(`\n  ${chalk.underline(titles_to_show[i])}: ${key}`)
+        i++
     }
 }
 
-function get_html_titles_by_page_files_array(page_files){
+// percorre todas as páginas e pega o texto do title de cada uma, adicionando em um array e retornando-o
+function get_html_titles_by_page_files_table(page_files){
     const titles = []
     for(const key of Object.keys(page_files)){
         const page_file = get_page_file_by(key)
@@ -276,30 +244,11 @@ function get_html_titles_by_page_files_array(page_files){
     return titles
 }
 
+// pega o texto do title de uma página, deixando a primeira letra maiúscula, por questão estética.
 function get_html_title_by_page_file(page_file){
     const page_html = get_html_off(page_file)
     let title = get_html_title(page_html)
     const first_letter_in_upper_case = title[0]
     title = first_letter_in_upper_case + title.slice(1)
     return title
-}
-
-function get_page_file_by(file_name){
-    const files_path = "../paginas"
-    const file = files_path + "/" + file_name
-    return file    
-}
-
-function get_file_name(file){
-    let file_name = file.split('/')
-    const last_index = file_name.length - 1
-    file_name = file_name[last_index]
-    return file_name
-}
-
-function get_url_by(file_name){
-    if(file_name.split("&").length > 1){
-        file_name = file_name.split("$").join("/")
-    }
-    return file_name
 }

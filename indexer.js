@@ -1,5 +1,6 @@
-import {load_html, get_html_on, download_html } from "./features/buscador_features.js"
+import { get_html_on, download_html } from "./features/buscador_features.js"
 import { IndexPageException } from "./exceptions/IndexPageException.js"
+import { load_html } from "./utils/utils.js"
 import {Pilha} from "./pilha.js"
 
 let stack = new Pilha([])
