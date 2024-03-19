@@ -3,7 +3,7 @@ import { IndexPageException } from "./exceptions/IndexPageException.js"
 import {Pilha} from "./pilha.js"
 
 let stack = new Pilha([])
-const download_path = "../paginas/"
+const download_path = "C:\\Users\\José Guilherme\\Desktop\\buscador\\paginas\\"
 
 export async function index_page(url, hashtable, urlBase){
     try{

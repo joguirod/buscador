@@ -3,6 +3,8 @@ import { read_json, write_in_json } from "../features/buscador_features.js"
 import { index_page } from "../indexer.js"
 import { ApplicationException } from "../exceptions/ApplicationException.js"
 import { ranker, show_pages, sortPages, ranking_to_show } from "../features/ranqueador_features.js"
+import { sortPages, get_number, get_option, clear_screen,
+press_anykey, get_word, write_in_json, read_json } from "../utils/utils.js"
 
 async function main(){
     let option = -1
@@ -30,6 +32,7 @@ async function main(){
                         console.log("(!) Ocorreu um erro durante a indexação, mesmo assim algumas páginas poderam ser indexadas.")
                     }
                     await write_in_json(hashtable, indexed_file_path)
+                    console.log("°_° Indexação concluída!")
                     press_anykey()
                     break
                 case 2:
@@ -96,7 +99,7 @@ async function main(){
                     break
             }
         } catch(ApplicationException){
-            console.log("(!) Houve o seguinte erro durante a execução: " + ApplicationException)
+            console.log(ApplicationException)
             press_anykey()
         }
     } while (option !== 0)
@@ -108,30 +111,6 @@ function menu(){
     + "| 1 - Indexar páginas         3 - Configurações    |\n"
     + "| 2 - Buscar                  0 - Sair do programa |\n"
     + "|==================================================|\n"
-}
-
-function get_number(label){
-    let number = question(label)
-
-    while (isNaN(Number(number))){
-        console.log('! Valor inválido !')
-        number = question(label)
-    }
-
-    return Number(number)
-}
-
-function get_option(){
-    let option = get_number("> Escolha uma opção: ")
-    return option
-}
-
-function clear_screen(){
-    console.clear()
-}
-
-function press_anykey(){
-    question("Press <anykey> to continue...")
 }
 
 function print_pages_must_show(pages){
@@ -198,15 +177,6 @@ function show_points_to_customize(points_table){
         console.log(exit_string)
         i++
     }
-}
-
-function get_word(){
-    let word = ""
-    word = question("> Insira uma palavra: ")
-    while(word.trim() === ""){
-        word = question("(!) Insira uma palavra válida >:(")
-    }
-    return word
 }
 
 main()

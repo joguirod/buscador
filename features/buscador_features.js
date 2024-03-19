@@ -5,14 +5,7 @@ import {LoadHtmlException} from "../exceptions/LoadHtmlException.js"
 import {HtmlEmptyException} from "../exceptions/HtmlEmptyException.js"
 import {GetRequistionException} from "../exceptions/GetRequistionException.js"
 import {DownloadHtmlException} from "../exceptions/DownloadHtmlException.js"
-
-export function load_html(html){
-    try{
-        return cheerio.load(html)
-    } catch(error){
-        throw new LoadHtmlException("Erro ao tentar carregar o HTML para o Cheerio")
-    }
-}
+import {load_html} from "../utils/utils.js"
 
 export async function get_html_on(url){
     try {
@@ -38,7 +31,11 @@ export async function download_html(html, url, path){
 
     try{
         const document_name = set_document_name(url)
-        fs.writeFileSync(path + `${document_name}.html`, html)
+        if(document_name.endsWith(".html")){
+            fs.writeFileSync(path + `${document_name}`, html)
+        } else {
+            fs.writeFileSync(path + `${document_name}.html`, html)
+        }
     } catch(error){
         // throw new HtmlEmptyException("Erro ao fazer o download HTML");
         console.log("(!) Houve uma exceção durante o download")
@@ -46,66 +43,21 @@ export async function download_html(html, url, path){
 }
 
 function set_document_name(url){
-    // se tiver '/' no link, nomeie o arquivo de acordo com o <title> do html
+    // se tiver '/' no link, troque as ocorrências por $
     if(url.split("/").length > 1){
-        return document_name_by_title(url)
+        // document_name_by(url_with_slash)
+        return document_name_by(url)
     }
     // se não, nomeio com a url, exemplo: urlBase/mochileiro.html arquivo = mochileiro. html, urlBase/filmes/lista_completa arquivo = <title> tag </title>
     return document_name_by_url(url)
 }
 
-function document_name_by_title(url) {
-    // const title = get_html_title(html).toLowerCase();
-    
-    // // Remover espaços extras e substituir acentos por caracteres sem acento
-    // const cleanedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
-    
-    // // Remover caracteres especiais, exceto letras, números e o sublinhado
-    // const cleanedTitleSpecialChars = cleanedTitle.replace(/[^\w\s]/gi, '');
+function document_name_by(url_with_slash){
+    const document_name = url_with_slash.split("/").join("$")
 
-    // // Limitar o comprimento do nome do documento, se necessário
-    // const maxLength = 255; // Exemplo de limite de comprimento
-    // const truncatedTitle = cleanedTitleSpecialChars.substring(0, maxLength);
-    let truncatedTitle = url.split("/").join("$")
-
-    return truncatedTitle;
+    return document_name;
 }
 
 function document_name_by_url(url){
-    return url.split(".html")[0]
-}
-
-export function get_html_title(html){
-    const $ = load_html(html)
-    return $('title').text()
-}
-
-export async function write_in_json(object, json_path){
-    const jsonString = JSON.stringify(object);
-
-    // Escrever a string JSON em um arquivo
-    fs.writeFileSync(json_path, jsonString, 'utf8', (err) => {
-    if (err) {
-        console.error('Erro ao escrever arquivo:', err);
-        return;
-    }
-    });
-}
-
-export function read_json(file_path) {
-    try {
-        const data = fs.readFileSync(file_path, 'utf8');
-        
-        // verifica se o conteudo lido não está vazio
-        if(data.length > 0){
-            const hashtable = JSON.parse(data);
-            return hashtable;
-        } else {
-            // se estiver vazio, retorne uma hashtable vazia
-            const hashtable = {}
-            return hashtable
-        }
-    } catch (error) {
-        throw error; // Lançar o erro para ser tratado pelo código que chamou a função
-    }
+    return url
 }
