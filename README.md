@@ -6,6 +6,7 @@ Atividade Buscador -> Disciplina programação para web I
 > Bibliotecas utilizadas:
   - Axios
   - Cheerio
+  - Readline-sync
 
 > Como executar:
   - git clone https://github.com/joguirod/buscador
