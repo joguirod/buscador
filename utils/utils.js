@@ -159,7 +159,7 @@ export function get_word(){
     let word = ""
     word = question("> Insira uma palavra: ").trim()
     while(word === ""){
-        word = question("(!) Insira uma palavra válida >:(").trim()
+        word = question("(!) Insira uma palavra válida >:(\n> ").trim()
     }
     return word
 }

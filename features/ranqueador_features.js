@@ -46,7 +46,7 @@ function calculate_page_freshness_points(page_file){
     }
 
     // se não, retorne a diferença de anos multiplicados pela quantidade de pontos a serem reduzidos (valor negativo)
-    const points_to_receive = Math.abs(current_year - publication_year) * points_table["reducao_frescor"] * -1
+    const points_to_receive = ["frescor_conteudo"] - (Math.abs(current_year - publication_year) * points_table["reducao_frescor"] * -1)
 
     // se a data da página não estiver em uma tag <p> e a pontuação calculada acabe ficando NaN, retorne 0
     return isNaN(points_to_receive) ? 0 : points_to_receive
@@ -67,7 +67,7 @@ function calculate_quantity_of_especific_word_points(page_file, words){
         word_frequency[word] = matches ? matches.length : 0 // armazenando a frequência do termo
 
         if(text_content.match(wrong_regex)){
-            word_frequency[word] -= 1
+            word_frequency[word] -= text_content.match(wrong_regex).legnth
         }
     }
 
